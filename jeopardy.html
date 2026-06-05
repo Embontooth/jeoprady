@@ -1,533 +1,863 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jeopardy</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f4f0;
-      color: #1a1a1a;
-      min-height: 100vh;
-      padding: 2rem 1rem;
-    }
-    .container { max-width: 820px; margin: 0 auto; }
-    .screen { display: none; }
-    .screen.active { display: block; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jeopardy</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    /* SETUP */
-    .setup-header { text-align: center; margin-bottom: 2rem; }
-    .setup-header h1 { font-size: 28px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
-    .setup-header p { font-size: 15px; color: #666; }
-    .teams-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
-    .team-card { position: relative; background: #fff; border: 1px solid #e0ddd5; border-radius: 12px; padding: 1rem; }
-    .remove-team {
-      position: absolute; right: 8px; top: 8px; border: none; background: transparent; color: #c33;
-      font-weight: 700; cursor: pointer; font-size: 14px;
-    }
-    .team-card label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
-    .team-card input {
-      width: 100%; font-size: 15px; padding: 8px 12px;
-      border: 1px solid #d0cdc5; border-radius: 8px;
-      background: #faf9f7; color: #1a1a1a; outline: none;
-    }
-    .team-card input:focus { border-color: #534AB7; }
-    .btn-primary {
-      display: block; width: 100%; padding: 14px;
-      background: #3C3489; color: #EEEDFE;
-      border: none; border-radius: 10px;
-      font-size: 16px; font-weight: 600; cursor: pointer;
-    }
-    .btn-primary:hover { background: #534AB7; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f4f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
 
-    /* SCORE BAR */
-    .score-bar { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .score-chip {
-      flex: 1; min-width: 100px;
-      background: #fff; border: 1px solid #e0ddd5;
-      border-radius: 10px; padding: 10px 14px; text-align: center;
-    }
-    .score-chip .t-name { font-size: 12px; color: #888; margin-bottom: 2px; }
-    .score-chip .t-score { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+        }
 
-    /* BOARD */
-    .round-label { text-align: center; font-size: 13px; color: #888; margin-bottom: 12px; }
-    .board { display: grid; gap: 6px; }
-    .cat-header {
-      background: #3C3489; color: #EEEDFE;
-      border-radius: 10px; padding: 12px 8px;
-      text-align: center; font-size: 12px; font-weight: 600;
-      line-height: 1.4; min-height: 56px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .q-btn {
-      background: #fff; border: 1px solid #e0ddd5;
-      border-radius: 10px; padding: 10px 4px;
-      text-align: center; font-size: 16px; font-weight: 600;
-      color: #534AB7; cursor: pointer; min-height: 48px;
-      transition: background 0.15s;
-    }
-    .q-btn:hover:not(:disabled) { background: #f0eefc; }
-    .q-btn:disabled { color: #bbb; background: #f5f4f0; cursor: default; }
-    .btn-row { display: flex; gap: 8px; margin-top: 1.5rem; }
-    .btn-secondary {
-      flex: 1; padding: 11px;
-      background: #fff; border: 1px solid #d0cdc5;
-      border-radius: 10px; font-size: 14px; color: #1a1a1a; cursor: pointer;
-    }
-    .btn-secondary:hover { background: #f5f4f0; }
-    .btn-success {
-      flex: 1; padding: 11px;
-      background: #0F6E56; color: #E1F5EE;
-      border: none; border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-    }
-    .btn-success:hover { background: #1D9E75; }
+        .screen {
+            display: none;
+        }
 
-    /* QUESTION */
-    .modal-bg {
-      background: #fff; border: 1px solid #e0ddd5;
-      border-radius: 14px; padding: 1.75rem; margin-bottom: 1rem;
-    }
-    .q-meta { font-size: 12px; color: #888; margin-bottom: 10px; }
-    .q-points {
-      display: inline-block;
-      background: #EEEDFE; color: #3C3489;
-      font-size: 13px; font-weight: 600;
-      padding: 4px 12px; border-radius: 8px; margin-bottom: 1.25rem;
-    }
-    .q-text { font-size: 20px; color: #1a1a1a; line-height: 1.5; margin-bottom: 1.75rem; }
-    .answer-box {
-      background: #f0faf5; border: 1px solid #9FE1CB;
-      border-radius: 10px; padding: 1rem; display: none; margin-bottom: 1rem;
-    }
-    .answer-box .label { font-size: 12px; color: #0F6E56; margin-bottom: 4px; font-weight: 600; }
-    .answer-box .ans { font-size: 17px; font-weight: 600; color: #085041; }
-    .reveal-btn {
-      width: 100%; padding: 11px;
-      background: #f5f4f0; border: 1px solid #d0cdc5;
-      border-radius: 10px; font-size: 15px; color: #1a1a1a; cursor: pointer; margin-bottom: 10px;
-    }
-    .reveal-btn:hover { background: #ebe9e4; }
-    .award-section { margin-top: 1rem; }
-    .award-section p { font-size: 13px; color: #666; margin-bottom: 8px; }
-    .award-grid { display: flex; gap: 8px; flex-wrap: wrap; }
-    .award-btn {
-      padding: 9px 16px;
-      background: #fff; border: 1px solid #d0cdc5;
-      border-radius: 10px; font-size: 14px; color: #1a1a1a; cursor: pointer;
-    }
-    .award-btn:hover { background: #f0eefc; border-color: #534AB7; color: #3C3489; }
+        .screen.active {
+            display: block;
+        }
 
-    /* LIGHTNING */
-    .lightning-header { text-align: center; margin-bottom: 1.75rem; }
-    .lightning-header h2 { font-size: 24px; font-weight: 600; color: #1a1a1a; }
-    .lightning-header p { font-size: 14px; color: #666; margin-top: 6px; }
-    .lq-item {
-      background: #fff; border: 1px solid #e0ddd5;
-      border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-    }
-    .lq-num { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 4px; }
-    .lq-q { font-size: 15px; color: #1a1a1a; margin-bottom: 8px; }
-    .lq-a { font-size: 14px; color: #0F6E56; font-weight: 600; display: none; margin-top: 6px; }
-    .lq-a.shown { display: block; }
-    .lq-reveal {
-      font-size: 12px; color: #888; background: none;
-      border: none; cursor: pointer; padding: 0; text-decoration: underline;
-    }
+        /* SETUP */
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
 
-    /* FINAL */
-    .final-header { text-align: center; margin-bottom: 2rem; }
-    .final-header h1 { font-size: 26px; font-weight: 600; color: #1a1a1a; }
-    .winner-banner {
-      background: #3C3489; color: #EEEDFE;
-      border-radius: 14px; padding: 1.75rem; text-align: center; margin-bottom: 1.25rem;
-    }
-    .winner-banner h2 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
-    .winner-banner p { font-size: 14px; opacity: 0.8; }
-    .final-score {
-      background: #fff; border: 1px solid #e0ddd5;
-      border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;
-    }
-    .final-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px solid #f0ede8;
-    }
-    .final-row:last-child { border-bottom: none; }
-    .btn-restart {
-      display: block; width: 100%; padding: 13px;
-      background: #fff; border: 1px solid #d0cdc5;
-      border-radius: 10px; font-size: 15px; color: #1a1a1a; cursor: pointer;
-    }
-    .btn-restart:hover { background: #f5f4f0; }
+        .setup-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
 
-    @media (max-width: 500px) {
-      .teams-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+        .setup-header p {
+            font-size: 15px;
+            color: #666;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .team-card {
+            position: relative;
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .remove-team {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            border: none;
+            background: transparent;
+            color: #c33;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .team-card label {
+            font-size: 13px;
+            color: #666;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .team-card input {
+            width: 100%;
+            font-size: 15px;
+            padding: 8px 12px;
+            border: 1px solid #d0cdc5;
+            border-radius: 8px;
+            background: #faf9f7;
+            color: #1a1a1a;
+            outline: none;
+        }
+
+        .team-card input:focus {
+            border-color: #534AB7;
+        }
+
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #3C3489;
+            color: #EEEDFE;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #534AB7;
+        }
+
+        /* SCORE BAR */
+        .score-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .score-chip {
+            flex: 1;
+            min-width: 100px;
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: center;
+        }
+
+        .score-chip .t-name {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .score-chip .t-score {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* BOARD */
+        .round-label {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .board {
+            display: grid;
+            gap: 6px;
+        }
+
+        .cat-header {
+            background: #3C3489;
+            color: #EEEDFE;
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.4;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .q-btn {
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 10px;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #534AB7;
+            cursor: pointer;
+            min-height: 48px;
+            transition: background 0.15s;
+        }
+
+        .q-btn:hover:not(:disabled) {
+            background: #f0eefc;
+        }
+
+        .q-btn:disabled {
+            color: #bbb;
+            background: #f5f4f0;
+            cursor: default;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 11px;
+            background: #fff;
+            border: 1px solid #d0cdc5;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1a1a1a;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f4f0;
+        }
+
+        .btn-success {
+            flex: 1;
+            padding: 11px;
+            background: #0F6E56;
+            color: #E1F5EE;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-success:hover {
+            background: #1D9E75;
+        }
+
+        /* QUESTION */
+        .modal-bg {
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 14px;
+            padding: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .q-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .q-points {
+            display: inline-block;
+            background: #EEEDFE;
+            color: #3C3489;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        .q-text {
+            font-size: 20px;
+            color: #1a1a1a;
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+
+        .answer-box {
+            background: #f0faf5;
+            border: 1px solid #9FE1CB;
+            border-radius: 10px;
+            padding: 1rem;
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        .answer-box .label {
+            font-size: 12px;
+            color: #0F6E56;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .answer-box .ans {
+            font-size: 17px;
+            font-weight: 600;
+            color: #085041;
+        }
+
+        .reveal-btn {
+            width: 100%;
+            padding: 11px;
+            background: #f5f4f0;
+            border: 1px solid #d0cdc5;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #1a1a1a;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .reveal-btn:hover {
+            background: #ebe9e4;
+        }
+
+        .award-section {
+            margin-top: 1rem;
+        }
+
+        .award-section p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .award-grid {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .award-btn {
+            padding: 9px 16px;
+            background: #fff;
+            border: 1px solid #d0cdc5;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1a1a1a;
+            cursor: pointer;
+        }
+
+        .award-btn:hover {
+            background: #f0eefc;
+            border-color: #534AB7;
+            color: #3C3489;
+        }
+
+        /* LIGHTNING */
+        .lightning-header {
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .lightning-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .lightning-header p {
+            font-size: 14px;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .lq-item {
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+        }
+
+        .lq-num {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .lq-q {
+            font-size: 15px;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .lq-a {
+            font-size: 14px;
+            color: #0F6E56;
+            font-weight: 600;
+            display: none;
+            margin-top: 6px;
+        }
+
+        .lq-a.shown {
+            display: block;
+        }
+
+        .lq-reveal {
+            font-size: 12px;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        /* FINAL */
+        .final-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .final-header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .winner-banner {
+            background: #3C3489;
+            color: #EEEDFE;
+            border-radius: 14px;
+            padding: 1.75rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .winner-banner h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .winner-banner p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .final-score {
+            background: #fff;
+            border: 1px solid #e0ddd5;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .final-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0ede8;
+        }
+
+        .final-row:last-child {
+            border-bottom: none;
+        }
+
+        .btn-restart {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            background: #fff;
+            border: 1px solid #d0cdc5;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #1a1a1a;
+            cursor: pointer;
+        }
+
+        .btn-restart:hover {
+            background: #f5f4f0;
+        }
+
+        @media (max-width: 500px) {
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="container">
+    <div class="container">
 
-  <!-- SETUP -->
-  <div class="screen active" id="screen-setup">
-    <div class="setup-header">
-      <h1></h1>Jeopardy</h1>
-      <p>Enter up to 8 team names to get started</p>
-    </div>
-    <div class="teams-grid" id="teams-grid"></div>
-    <div style="display:flex;gap:8px;margin-bottom:1.5rem">
-      <button class="btn-secondary" onclick="addTeam()">+ Add Team</button>
-      <button class="btn-secondary" onclick="resetTeams()">Reset Teams</button>
-    </div>
-    <button class="btn-primary" onclick="startGame()">Start Game</button>
-  </div>
+        <!-- SETUP -->
+        <div class="screen active" id="screen-setup">
+            <div class="setup-header">
+                <h1></h1>Jeopardy</h1>
+                <p>Enter up to 8 team names to get started</p>
+            </div>
+            <div class="teams-grid" id="teams-grid"></div>
+            <div style="display:flex;gap:8px;margin-bottom:1.5rem">
+                <button class="btn-secondary" onclick="addTeam()">+ Add Team</button>
+                <button class="btn-secondary" onclick="resetTeams()">Reset Teams</button>
+            </div>
+            <button class="btn-primary" onclick="startGame()">Start Game</button>
+        </div>
 
-  <!-- BOARD -->
-  <div class="screen" id="screen-board">
-    <div class="score-bar" id="score-bar"></div>
-    <div class="round-label" id="round-label"></div>
-    <div class="board" id="board" style="grid-template-columns: repeat(5, 1fr);"></div>
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goLightning()">⚡ Lightning Round</button>
-      <button class="btn-success" id="round2-btn" onclick="startRound2()" style="display:none">Round 2 →</button>
-    </div>
-  </div>
+        <!-- BOARD -->
+        <div class="screen" id="screen-board">
+            <div class="score-bar" id="score-bar"></div>
+            <div class="round-label" id="round-label"></div>
+            <div class="board" id="board" style="grid-template-columns: repeat(5, 1fr);"></div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="goLightning()">⚡ Lightning Round</button>
+                <button class="btn-success" id="round2-btn" onclick="startRound2()" style="display:none">Round 2
+                    →</button>
+            </div>
+        </div>
 
-  <!-- QUESTION -->
-  <div class="screen" id="screen-question">
-    <div class="modal-bg">
-      <div class="q-meta" id="q-meta"></div>
-      <div class="q-points" id="q-points"></div>
-      <div class="q-text" id="q-text"></div>
-      <button class="reveal-btn" onclick="revealAnswer()">👁 Reveal Answer</button>
-      <div class="answer-box" id="answer-box">
-        <div class="label">Answer</div>
-        <div class="ans" id="q-answer"></div>
-      </div>
-    </div>
-    <div class="award-section" id="award-section" style="display:none">
-      <p>Award points to which team? (use + or − then Confirm)</p>
-      <div class="award-grid" id="award-grid"></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn-secondary" id="award-confirm" onclick="confirmAwards()">Confirm</button>
-        <button class="btn-secondary" id="award-cancel" onclick="cancelAwards()">Cancel</button>
-      </div>
-    </div>
-    <div class="btn-row" style="margin-top:1rem">
-      <button class="btn-secondary" onclick="noPoints()">← Back (no points)</button>
-    </div>
-  </div>
+        <!-- QUESTION -->
+        <div class="screen" id="screen-question">
+            <div class="modal-bg">
+                <div class="q-meta" id="q-meta"></div>
+                <div class="q-points" id="q-points"></div>
+                <div class="q-text" id="q-text"></div>
+                <button class="reveal-btn" onclick="revealAnswer()">👁 Reveal Answer</button>
+                <div class="answer-box" id="answer-box">
+                    <div class="label">Answer</div>
+                    <div class="ans" id="q-answer"></div>
+                </div>
+            </div>
+            <div class="award-section" id="award-section" style="display:none">
+                <p>Award points to which team? (use + or − then Confirm)</p>
+                <div class="award-grid" id="award-grid"></div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <button class="btn-secondary" id="award-confirm" onclick="confirmAwards()">Confirm</button>
+                    <button class="btn-secondary" id="award-cancel" onclick="cancelAwards()">Cancel</button>
+                </div>
+            </div>
+            <div class="btn-row" style="margin-top:1rem">
+                <button class="btn-secondary" onclick="noPoints()">← Back (no points)</button>
+            </div>
+        </div>
 
-  <!-- LIGHTNING ROUND -->
-  <div class="screen" id="screen-lightning">
-    <div class="lightning-header">
-      <h2>⚡ Lightning Round</h2>
-      <p>Teams write answers on paper — 60 seconds! Then reveal one by one.</p>
+        <!-- LIGHTNING ROUND -->
+        <div class="screen" id="screen-lightning">
+            <div class="lightning-header">
+                <h2>⚡ Lightning Round</h2>
+                <p>Teams write answers on paper — 60 seconds! Then reveal one by one.</p>
+            </div>
+            <div id="lightning-qs"></div>
+            <div class="btn-row" style="margin-top:1.5rem">
+                <button class="btn-secondary" onclick="goBack()">← Back to board</button>
+                <button class="btn-success" onclick="goFinal()">Final Scores →</button>
+            </div>
+        </div>
+
+        <!-- FINAL SCORES -->
+        <div class="screen" id="screen-final">
+            <div class="final-header">
+                <h1>🏆 Final Scores</h1>
+            </div>
+            <div class="winner-banner" id="winner-banner"></div>
+            <div class="final-score" id="final-score"></div>
+            <button class="btn-restart" onclick="restartGame()">↩ Play Again</button>
+        </div>
+
     </div>
-    <div id="lightning-qs"></div>
-    <div class="btn-row" style="margin-top:1.5rem">
-      <button class="btn-secondary" onclick="goBack()">← Back to board</button>
-      <button class="btn-success" onclick="goFinal()">Final Scores →</button>
-    </div>
-  </div>
 
-  <!-- FINAL SCORES -->
-  <div class="screen" id="screen-final">
-    <div class="final-header"><h1>🏆 Final Scores</h1></div>
-    <div class="winner-banner" id="winner-banner"></div>
-    <div class="final-score" id="final-score"></div>
-    <button class="btn-restart" onclick="restartGame()">↩ Play Again</button>
-  </div>
-
-</div>
-
-<script>
-const CATEGORIES = [
-  {
-    name: "AI",
-    questions: [
-      { q: "Water droplets that fall from clouds to the earth's surface", a: "rAIn" },
-      { q: "Money paid to the court to secure a defendant's release while awaiting trial", a: "bAIl" },
-      { q: "If your workout technique needs work, you might seek advice from this professional", a: "Trainer" }
+    <script>
+        const CATEGORIES = [
+            {
+                name: "AI",
+                questions: [
+                    { q: "Water droplets that fall from clouds to the earth's surface", a: "rAIn" },
+                    { q: "Money paid to the court to secure a defendant's release while awaiting trial", a: "bAIl" },
+                    { q: "If your workout technique needs work, you might seek advice from this professional", a: "Trainer" },
       { q: "This bird's eggs are commonly served in gourmet dishes and are much smaller than chicken eggs", a: "QuAIl" },
-      { q: "A medieval legend describes this sacred relic as the object of a quest undertaken by the knights of Galahad", a: "Holy grAIl" },
-    ]
-  },
-  {
-    name: "Acronyms",
-    questions: [
-      { q: "This is a completely automated public turing test to tell computers and humans apart", a: "CAPTCHA" },
-      { q: "This abbreviation used in emails comes from the Latin phrase carbon copy", a: "CC" },
-      { q: "The name of this toy company came is derived from the Danish words meaning 'play well'", a: "LEGO (Leg Godt)" },
-      { q: "This weapon's name is an acronym inspired by the novel Tom Swift and his Electric Rifle", a: "TASER (Thomas A. Swift's Electric Rifle)" }
+                    { q: "A medieval legend describes this sacred relic as the object of a quest undertaken by the knights of Galahad", a: "Holy grAIl" },
+                ]
+            },
+            {
+                name: "Acronyms",
+                questions: [
+                    { q: "This is a completely automated public turing test to tell computers and humans apart", a: "CAPTCHA" },
+                    { q: "This abbreviation used in emails comes from the Latin phrase carbon copy", a: "CC" },
+                    { q: "The name of this toy company came is derived from the Danish words meaning 'play well'", a: "LEGO (Leg Godt)" },
+                    { q: "This weapon's name is an acronym inspired by the novel Tom Swift and his Electric Rifle", a: "TASER (Thomas A. Swift's Electric Rifle)" },
       { q: "This furniture retailers name is formed from the intials of its founders and the names of the farm and village where he grew up", a: "IKEA (Ingvar, Kamprad, Elmtaryd, Agunnaryd)" },
-    ]
-  },
-  {
-    name: "Pop Culture",
-    questions: [
-      { q: "Before becoming a globally famous actor, this wrestler was known in WWE as 'The Brahma Bull'", a: "Dwayne the Rock Johnson" },
-      { q: "The phrase 'Thats what she said' became a recurring joke on this American sitcom", a: "The Office" },
-      { q: "The singer born Abel Tesfaye performs under this stage name", a: "The Weekend" }
+                ]
+            },
+            {
+                name: "Pop Culture",
+                questions: [
+                    { q: "Before becoming a globally famous actor, this wrestler was known in WWE as 'The Brahma Bull'", a: "Dwayne the Rock Johnson" },
+                    { q: "The phrase 'Thats what she said' became a recurring joke on this American sitcom", a: "The Office" },
+                    { q: "The singer born Abel Tesfaye performs under this stage name", a: "The Weekend" },
       { q: "In the original run of the sitcom 'Friends', this characters middle name was revealed to be Muriel", a: "Chandler Muriel Bing" },
-      { q: "William Shakespear's wife shares this name with a modern hollywood actress who won an Oscar for Les Miserables", a: "Anne Hathaway" },
-    ]
-  },
-  {
-    name: "Badly Explained",
-    questions: [
-      { q: "A trilogy in which a jewelry enthusiast spends years collecting shiny objects just to throw them into a volcano", a: "The Lord of the Rings" },
-      { q: "The world's most expensive queue, ocassionally interrupted by overtakes", a: "Formula One" },
-      { q: "A book series in which a student embarks on a years-long scavenger hunt just to make one man mortal again", a: "Harry Potter" }
+                    { q: "William Shakespear's wife shares this name with a modern hollywood actress who won an Oscar for Les Miserables", a: "Anne Hathaway" },
+                ]
+            },
+            {
+                name: "Badly Explained",
+                questions: [
+                    { q: "A trilogy in which a jewelry enthusiast spends years collecting shiny objects just to throw them into a volcano", a: "The Lord of the Rings" },
+                    { q: "The world's most expensive queue, ocassionally interrupted by overtakes", a: "Formula One" },
+                    { q: "A book series in which a student embarks on a years-long scavenger hunt just to make one man mortal again", a: "Harry Potter" },
       { q: "A movie in which a team of experts spend two and a half hours trying to convince someone to change their mind", a: "Inception" },
-      { q: "A movie in which a father goes to extraordinary lengths because his son forgot where he lives", a: "Finding Nemo" },
-    ]
-  }
-];
+                    { q: "A movie in which a father goes to extraordinary lengths because his son forgot where he lives", a: "Finding Nemo" },
+                ]
+            }
+        ];
 
-// ============================================================
-//  EDIT LIGHTNING ROUND QUESTIONS HERE
-// ============================================================
-const LIGHTNING = [
-  { q: "What is the capital of France?", a: "Paris" },
-  { q: "Who painted the ceiling of the Sistine Chapel?", a: "Michelangelo" },
-  { q: "What is the fastest land animal?", a: "Cheetah" },
-  { q: "Which element has the chemical symbol 'O'?", a: "Oxygen" },
-  { q: "Which planet is known for its rings?", a: "Saturn" },
-  { q: "How many continents are there on Earth?", a: "7" },
-  { q: "Who wrote 'Romeo and Juliet'?", a: "William Shakespeare" },
-  { q: "Which country is famous for the Great Barrier Reef?", a: "Australia" },
-  { q: "What is the largest mammal?", a: "Blue whale" },
-  { q: "Which sport is known as the 'king of sports'?", a: "Soccer (Football)" },
-  { q: "What is the boiling point of water in Celsius?", a: "100°C" },
-  { q: "Which city is home to the Colosseum?", a: "Rome" },
-  { q: "Who is known as the 'Father of Computers'?", a: "Charles Babbage" },
-  { q: "What is the primary language spoken in Brazil?", a: "Portuguese" },
-  { q: "Which metal is liquid at room temperature?", a: "Mercury" },
-  { q: "What year did the first man land on the moon?", a: "1969" },
-  { q: "Which organ pumps blood through the body?", a: "Heart" },
-  { q: "Which instrument has 88 keys?", a: "Piano" },
-  { q: "What gas do humans need to breathe to survive?", a: "Oxygen" },
-  { q: "Which ocean is on the US West Coast?", a: "Pacific Ocean" }
-];
-// ============================================================
+        // ============================================================
+        //  EDIT LIGHTNING ROUND QUESTIONS HERE
+        // ============================================================
+        const LIGHTNING = [
+            { q: "What is the capital of France?", a: "Paris" },
+            { q: "Who painted the ceiling of the Sistine Chapel?", a: "Michelangelo" },
+            { q: "What is the fastest land animal?", a: "Cheetah" },
+            { q: "Which element has the chemical symbol 'O'?", a: "Oxygen" },
+            { q: "Which planet is known for its rings?", a: "Saturn" },
+            { q: "How many continents are there on Earth?", a: "7" },
+            { q: "Who wrote 'Romeo and Juliet'?", a: "William Shakespeare" },
+            { q: "Which country is famous for the Great Barrier Reef?", a: "Australia" },
+            { q: "What is the largest mammal?", a: "Blue whale" },
+            { q: "Which sport is known as the 'king of sports'?", a: "Soccer (Football)" },
+            { q: "What is the boiling point of water in Celsius?", a: "100°C" },
+            { q: "Which city is home to the Colosseum?", a: "Rome" },
+            { q: "Who is known as the 'Father of Computers'?", a: "Charles Babbage" },
+            { q: "What is the primary language spoken in Brazil?", a: "Portuguese" },
+            { q: "Which metal is liquid at room temperature?", a: "Mercury" },
+            { q: "What year did the first man land on the moon?", a: "1969" },
+            { q: "Which organ pumps blood through the body?", a: "Heart" },
+            { q: "Which instrument has 88 keys?", a: "Piano" },
+            { q: "What gas do humans need to breathe to survive?", a: "Oxygen" },
+            { q: "Which ocean is on the US West Coast?", a: "Pacific Ocean" }
+        ];
+        // ============================================================
 
-let teams = [], scores = [], currentRound = 1, answered = [], currentQ = null;
+        let teams = [], scores = [], currentRound = 1, answered = [], currentQ = null;
 
-const DEFAULT_TEAMS = ['Team Alpha','Team Beta','Team Gamma','Team Delta'];
-function updateTeamLabels() {
-  const cards = document.querySelectorAll('#teams-grid .team-card');
-  cards.forEach((c, i) => {
-    const lbl = c.querySelector('label');
-    if (lbl) lbl.textContent = `Team ${i + 1}`;
-  });
-}
+        const DEFAULT_TEAMS = ['Team Alpha', 'Team Beta', 'Team Gamma', 'Team Delta'];
 
-function resetTeams() {
-  const grid = document.getElementById('teams-grid');
-  grid.innerHTML = '';
-  DEFAULT_TEAMS.forEach((name, i) => {
-    const div = document.createElement('div');
-    div.className = 'team-card';
-    div.innerHTML = `<label>Team ${i + 1}</label><input value="${name}" /><button class="remove-team" onclick="removeTeam(this)">✖</button>`;
-    grid.appendChild(div);
-  });
-  updateTeamLabels();
-}
+        function updateTeamLabels() {
+            const cards = document.querySelectorAll('#teams-grid .team-card');
+            cards.forEach((c, i) => {
+                const lbl = c.querySelector('label');
+                if (lbl) lbl.textContent = `Team ${i + 1}`;
+            });
+        }
 
-function addTeam() {
-  const grid = document.getElementById('teams-grid');
-  const count = grid.querySelectorAll('.team-card').length;
-  if (count >= 8) { alert('Maximum 8 teams'); return; }
-  const div = document.createElement('div');
-  div.className = 'team-card';
-  div.innerHTML = `<label>Team ${count + 1}</label><input value="Team ${count + 1}" /><button class="remove-team" onclick="removeTeam(this)">✖</button>`;
-  grid.appendChild(div);
-  updateTeamLabels();
-}
+        function resetTeams() {
+            const grid = document.getElementById('teams-grid');
+            grid.innerHTML = '';
+            DEFAULT_TEAMS.forEach((name, i) => {
+                const div = document.createElement('div');
+                div.className = 'team-card';
+                div.innerHTML = `<label>Team ${i + 1}</label><input value="${name}" /><button class="remove-team" onclick="removeTeam(this)">✖</button>`;
+                grid.appendChild(div);
+            });
+            updateTeamLabels();
+        }
 
-function removeTeam(btn) {
-  const grid = document.getElementById('teams-grid');
-  const cards = grid.querySelectorAll('.team-card');
-  if (cards.length <= 2) { alert('Need at least 2 teams'); return; }
-  btn.closest('.team-card').remove();
-  updateTeamLabels();
-}
+        function addTeam() {
+            const grid = document.getElementById('teams-grid');
+            const count = grid.querySelectorAll('.team-card').length;
+            if (count >= 8) { alert('Maximum 8 teams'); return; }
+            const div = document.createElement('div');
+            div.className = 'team-card';
+            div.innerHTML = `<label>Team ${count + 1}</label><input value="Team ${count + 1}" /><button class="remove-team" onclick="removeTeam(this)">✖</button>`;
+            grid.appendChild(div);
+            updateTeamLabels();
+        }
 
-function removeLastTeam() {
-  const grid = document.getElementById('teams-grid');
-  const cards = grid.querySelectorAll('.team-card');
-  if (cards.length <= 2) { alert('Need at least 2 teams'); return; }
-  cards[cards.length - 1].remove();
-  updateTeamLabels();
-}
+        function removeTeam(btn) {
+            const grid = document.getElementById('teams-grid');
+            const cards = grid.querySelectorAll('.team-card');
+            if (cards.length <= 2) { alert('Need at least 2 teams'); return; }
+            btn.closest('.team-card').remove();
+            updateTeamLabels();
+        }
 
-function startGame() {
-  const inputs = document.querySelectorAll('#teams-grid .team-card input');
-  const names = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
-  if (names.length < 2) { alert('Please enter at least 2 team names!'); return; }
-  teams = names;
-  scores = teams.map(() => 0);
-  answered = CATEGORIES.map(() => Array(5).fill(false));
-  currentRound = 1;
-  renderBoard();
-  show('board');
-}
+        function removeLastTeam() {
+            const grid = document.getElementById('teams-grid');
+            const cards = grid.querySelectorAll('.team-card');
+            if (cards.length <= 2) { alert('Need at least 2 teams'); return; }
+            cards[cards.length - 1].remove();
+            updateTeamLabels();
+        }
 
-function renderScoreBar() {
-  document.getElementById('score-bar').innerHTML = teams.map((t, i) =>
-    `<div class="score-chip">
+        function startGame() {
+            const inputs = document.querySelectorAll('#teams-grid .team-card input');
+            const names = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+            if (names.length < 2) { alert('Please enter at least 2 team names!'); return; }
+            teams = names;
+            scores = teams.map(() => 0);
+            answered = CATEGORIES.map(() => Array(5).fill(false));
+            currentRound = 1;
+            renderBoard();
+            show('board');
+        }
+
+        function renderScoreBar() {
+            document.getElementById('score-bar').innerHTML = teams.map((t, i) =>
+                `<div class="score-chip">
       <div class="t-name">${t}</div>
       <div class="t-score">${scores[i]}</div>
     </div>`
-  ).join('');
-}
+            ).join('');
+        }
 
-function renderBoard() {
-  renderScoreBar();
-  const mult = currentRound === 1 ? 1 : 2;
-  document.getElementById('round-label').textContent = currentRound === 1
-    ? 'Round 1 — 100 / 200 / 300 / 400 / 500 pts'
-    : 'Round 2 — 200 / 400 / 600 / 800 / 1000 pts';
+        function renderBoard() {
+            renderScoreBar();
+            const mult = currentRound === 1 ? 1 : 2;
+            document.getElementById('round-label').textContent = currentRound === 1
+                ? 'Round 1 — 100 / 200 / 300 / 400 / 500 pts'
+                : 'Round 2 — 200 / 400 / 600 / 800 / 1000 pts';
 
-  const board = document.getElementById('board');
-  board.innerHTML = '';
+            const board = document.getElementById('board');
+            board.innerHTML = '';
 
-  CATEGORIES.forEach(cat => {
-    const h = document.createElement('div');
-    h.className = 'cat-header';
-    h.textContent = cat.name;
-    board.appendChild(h);
-  });
+            CATEGORIES.forEach(cat => {
+                const h = document.createElement('div');
+                h.className = 'cat-header';
+                h.textContent = cat.name;
+                board.appendChild(h);
+            });
 
-  for (let qi = 0; qi < 5; qi++) {
-    CATEGORIES.forEach((cat, ci) => {
-      const pts = (qi + 1) * 100 * mult;
-      const btn = document.createElement('button');
-      btn.className = 'q-btn';
-      btn.textContent = pts;
-      btn.disabled = answered[ci][qi];
-      btn.onclick = () => openQuestion(ci, qi, pts);
-      board.appendChild(btn);
-    });
-  }
+            for (let qi = 0; qi < 5; qi++) {
+                CATEGORIES.forEach((cat, ci) => {
+                    const pts = (qi + 1) * 100 * mult;
+                    const btn = document.createElement('button');
+                    btn.className = 'q-btn';
+                    btn.textContent = pts;
+                    btn.disabled = answered[ci][qi];
+                    btn.onclick = () => openQuestion(ci, qi, pts);
+                    board.appendChild(btn);
+                });
+            }
 
-  const allDone = answered.every(col => col.every(Boolean));
-  document.getElementById('round2-btn').style.display =
-    (currentRound === 1 && allDone) ? 'block' : 'none';
-}
+            const allDone = answered.every(col => col.every(Boolean));
+            document.getElementById('round2-btn').style.display =
+                (currentRound === 1 && allDone) ? 'block' : 'none';
+        }
 
-function openQuestion(ci, qi, pts) {
-  currentQ = { ci, qi, pts };
-  const cat = CATEGORIES[ci];
-  const qData = cat.questions[qi];
-  document.getElementById('q-meta').textContent = `${cat.name} · Question ${qi + 1}`;
-  document.getElementById('q-points').textContent = `${pts} pts`;
-  document.getElementById('q-text').textContent = qData.q;
-  document.getElementById('q-answer').textContent = qData.a;
-  document.getElementById('answer-box').style.display = 'none';
-  document.getElementById('award-section').style.display = 'none';
-  show('question');
-}
+        function openQuestion(ci, qi, pts) {
+            currentQ = { ci, qi, pts };
+            const cat = CATEGORIES[ci];
+            const qData = cat.questions[qi];
+            document.getElementById('q-meta').textContent = `${cat.name} · Question ${qi + 1}`;
+            document.getElementById('q-points').textContent = `${pts} pts`;
+            document.getElementById('q-text').textContent = qData.q;
+            document.getElementById('q-answer').textContent = qData.a;
+            document.getElementById('answer-box').style.display = 'none';
+            document.getElementById('award-section').style.display = 'none';
+            show('question');
+        }
 
-let _originalScores = null;
-let _awardedThisQuestion = [];
-let _pendingAwards = [];
+        let _originalScores = null;
+        let _awardedThisQuestion = [];
+        let _pendingAwards = [];
 
-function revealAnswer() {
-  document.getElementById('answer-box').style.display = 'block';
-  const sec = document.getElementById('award-section');
-  sec.style.display = 'block';
-  // snapshot scores so we can cancel
-  _originalScores = scores.slice();
-  // reset per-question awarded tracker and pending selections
-  _awardedThisQuestion = teams.map(() => false);
-  _pendingAwards = teams.map(() => 0);
-  renderAwardGrid();
-  renderScoreBar();
-}
+        function revealAnswer() {
+            document.getElementById('answer-box').style.display = 'block';
+            const sec = document.getElementById('award-section');
+            sec.style.display = 'block';
+            // snapshot scores so we can cancel
+            _originalScores = scores.slice();
+            // reset per-question awarded tracker and pending selections
+            _awardedThisQuestion = teams.map(() => false);
+            _pendingAwards = teams.map(() => 0);
+            renderAwardGrid();
+            renderScoreBar();
+        }
 
-function renderAwardGrid() {
-  const grid = document.getElementById('award-grid');
-  grid.innerHTML = teams.map((t, i) => {
-    const used = _awardedThisQuestion[i];
-    if (used) {
-      return `<div style="display:flex;gap:8px;align-items:center;width:100%">` +
-        `<div style="flex:1;text-align:left;padding-left:6px">${t}</div>` +
-        `<div style="color:#666;padding-right:6px">Awarded</div>` +
-        `</div>`;
-    }
-    const sel = _pendingAwards[i] || 0;
-    const plusActive = sel === currentQ.pts ? 'background:#3C3489;color:#EEEDFE' : '';
-    const minusActive = sel === -currentQ.pts ? 'background:#c33;color:#fff' : '';
-    return `<div style="display:flex;gap:8px;align-items:center;width:100%">` +
-      `<div style="flex:1;text-align:left;padding-left:6px">${t}</div>` +
-      `<button class="award-btn" style="${plusActive}" onclick="togglePending(${i}, '+')">+${currentQ.pts}</button>` +
-      `<button class="award-btn" style="${minusActive}" onclick="togglePending(${i}, '-')">−${currentQ.pts}</button>` +
-    `</div>`;
-  }).join('');
-}
-function togglePending(i, sign) {
-  if (_awardedThisQuestion[i]) return;
-  const val = sign === '+' ? currentQ.pts : -currentQ.pts;
-  if (_pendingAwards[i] === val) _pendingAwards[i] = 0; else _pendingAwards[i] = val;
-  renderAwardGrid();
-}
+        function renderAwardGrid() {
+            const grid = document.getElementById('award-grid');
+            grid.innerHTML = teams.map((t, i) => {
+                const used = _awardedThisQuestion[i];
+                if (used) {
+                    return `<div style="display:flex;gap:8px;align-items:center;width:100%">` +
+                        `<div style="flex:1;text-align:left;padding-left:6px">${t}</div>` +
+                        `<div style="color:#666;padding-right:6px">Awarded</div>` +
+                        `</div>`;
+                }
+                const sel = _pendingAwards[i] || 0;
+                const plusActive = sel === currentQ.pts ? 'background:#3C3489;color:#EEEDFE' : '';
+                const minusActive = sel === -currentQ.pts ? 'background:#c33;color:#fff' : '';
+                return `<div style="display:flex;gap:8px;align-items:center;width:100%">` +
+                    `<div style="flex:1;text-align:left;padding-left:6px">${t}</div>` +
+                    `<button class="award-btn" style="${plusActive}" onclick="togglePending(${i}, '+')">+${currentQ.pts}</button>` +
+                    `<button class="award-btn" style="${minusActive}" onclick="togglePending(${i}, '-')">−${currentQ.pts}</button>` +
+                    `</div>`;
+            }).join('');
+        }
 
-function confirmAwards() {
-  // apply pending awards
-  for (let i = 0; i < teams.length; i++) {
-    const p = _pendingAwards[i] || 0;
-    if (p !== 0 && !_awardedThisQuestion[i]) {
-      scores[i] += p;
-      _awardedThisQuestion[i] = true;
-    }
-  }
-  _originalScores = null;
-  _pendingAwards = teams.map(() => 0);
-  _awardedThisQuestion = [];
-  renderScoreBar();
-  markAnswered();
-}
+        function togglePending(i, sign) {
+            if (_awardedThisQuestion[i]) return;
+            const val = sign === '+' ? currentQ.pts : -currentQ.pts;
+            if (_pendingAwards[i] === val) {
+                _pendingAwards[i] = 0; // toggle off
+            } else {
+                _pendingAwards[i] = val;
+            }
+            renderAwardGrid();
+        }
 
-function cancelAwards() {
-  if (_originalScores) {
-    scores = _originalScores.slice();
-    _originalScores = null;
-    renderScoreBar();
-  }
-  _awardedThisQuestion = teams.map(() => false);
-  _pendingAwards = teams.map(() => 0);
-  renderAwardGrid();
-}
+        function awardPoints(ti, delta) {
+            // delta may be positive or negative
+            const change = Number(delta) || 0;
+            scores[ti] += change;
+            // mark that this team has been awarded for this question so it can't be changed again
+            _awardedThisQuestion[ti] = true;
+            renderScoreBar();
+            renderAwardGrid();
+        }
 
-function noPoints() {
-  markAnswered();
-}
+        function confirmAwards() {
+            // apply pending awards, finalize and mark question answered
+            for (let i = 0; i < teams.length; i++) {
+                const p = _pendingAwards[i] || 0;
+                if (p !== 0 && !_awardedThisQuestion[i]) {
+                    scores[i] += p;
+                    _awardedThisQuestion[i] = true;
+                }
+            }
+            _originalScores = null;
+            _pendingAwards = teams.map(() => 0);
+            _awardedThisQuestion = [];
+            renderScoreBar();
+            markAnswered();
+        }
 
-function markAnswered() {
-  answered[currentQ.ci][currentQ.qi] = true;
-  renderBoard();
-  show('board');
-  const allDone = answered.every(col => col.every(Boolean));
-  if (currentRound === 1 && allDone) {
-    document.getElementById('round2-btn').style.display = 'block';
-  }
-}
+        function cancelAwards() {
+            if (_originalScores) {
+                scores = _originalScores.slice();
+                _originalScores = null;
+                renderScoreBar();
+            }
+            // reset per-question awarded tracker and pending selections so user can re-award
+            _awardedThisQuestion = teams.map(() => false);
+            _pendingAwards = teams.map(() => 0);
+            renderAwardGrid();
+        }
 
-function startRound2() {
-  currentRound = 2;
-  answered = CATEGORIES.map(() => Array(5).fill(false));
-  renderBoard();
-}
+        function noPoints() {
+            markAnswered();
+        }
 
-function goLightning() {
-  const container = document.getElementById('lightning-qs');
-  container.innerHTML = LIGHTNING.map((item, i) => `
+        function markAnswered() {
+            answered[currentQ.ci][currentQ.qi] = true;
+            renderBoard();
+            show('board');
+            const allDone = answered.every(col => col.every(Boolean));
+            if (currentRound === 1 && allDone) {
+                document.getElementById('round2-btn').style.display = 'block';
+            }
+        }
+
+        function startRound2() {
+            currentRound = 2;
+            answered = CATEGORIES.map(() => Array(5).fill(false));
+            renderBoard();
+        }
+
+        function goLightning() {
+            const container = document.getElementById('lightning-qs');
+            container.innerHTML = LIGHTNING.map((item, i) => `
     <div class="lq-item">
       <div class="lq-num">Q${i + 1}</div>
       <div class="lq-q">${item.q}</div>
@@ -535,45 +865,46 @@ function goLightning() {
       <button class="lq-reveal" onclick="revealLQ(${i})">reveal answer</button>
     </div>
   `).join('');
-  show('lightning');
-}
+            show('lightning');
+        }
 
-function revealLQ(i) {
-  document.getElementById('la' + i).classList.add('shown');
-  event.target.style.display = 'none';
-}
+        function revealLQ(i) {
+            document.getElementById('la' + i).classList.add('shown');
+            event.target.style.display = 'none';
+        }
 
-function goBack() {
-  renderBoard();
-  show('board');
-}
+        function goBack() {
+            renderBoard();
+            show('board');
+        }
 
-function goFinal() {
-  const sorted = teams
-    .map((t, i) => ({ t, s: scores[i] }))
-    .sort((a, b) => b.s - a.s);
-  const winner = sorted[0];
-  document.getElementById('winner-banner').innerHTML =
-    `<h2>🏆 ${winner.t}</h2><p>Wins with ${winner.s} points!</p>`;
-  document.getElementById('final-score').innerHTML = sorted.map((row, i) =>
-    `<div class="final-row">
+        function goFinal() {
+            const sorted = teams
+                .map((t, i) => ({ t, s: scores[i] }))
+                .sort((a, b) => b.s - a.s);
+            const winner = sorted[0];
+            document.getElementById('winner-banner').innerHTML =
+                `<h2>🏆 ${winner.t}</h2><p>Wins with ${winner.s} points!</p>`;
+            document.getElementById('final-score').innerHTML = sorted.map((row, i) =>
+                `<div class="final-row">
       <span style="font-size:15px">${i + 1}. ${row.t}</span>
       <span style="font-size:17px;font-weight:600">${row.s} pts</span>
     </div>`
-  ).join('');
-  show('final');
-}
+            ).join('');
+            show('final');
+        }
 
-function restartGame() {
-  show('setup');
-}
+        function restartGame() {
+            show('setup');
+        }
 
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
-}
-// initialize teams
-resetTeams();
-</script>
+        function show(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+        }
+        // initialize setup team inputs
+        resetTeams();
+    </script>
 </body>
+
 </html>
