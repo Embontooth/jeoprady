@@ -319,7 +319,6 @@ const LIGHTNING = [
 let teams = [], scores = [], currentRound = 1, answered = [], currentQ = null;
 
 const DEFAULT_TEAMS = ['Team Alpha','Team Beta','Team Gamma','Team Delta'];
-
 function updateTeamLabels() {
   const cards = document.querySelectorAll('#teams-grid .team-card');
   cards.forEach((c, i) => {
@@ -472,30 +471,15 @@ function renderAwardGrid() {
     `</div>`;
   }).join('');
 }
-
 function togglePending(i, sign) {
   if (_awardedThisQuestion[i]) return;
   const val = sign === '+' ? currentQ.pts : -currentQ.pts;
-  if (_pendingAwards[i] === val) {
-    _pendingAwards[i] = 0; // toggle off
-  } else {
-    _pendingAwards[i] = val;
-  }
-  renderAwardGrid();
-}
-
-function awardPoints(ti, delta) {
-  // delta may be positive or negative
-  const change = Number(delta) || 0;
-  scores[ti] += change;
-  // mark that this team has been awarded for this question so it can't be changed again
-  _awardedThisQuestion[ti] = true;
-  renderScoreBar();
+  if (_pendingAwards[i] === val) _pendingAwards[i] = 0; else _pendingAwards[i] = val;
   renderAwardGrid();
 }
 
 function confirmAwards() {
-  // apply pending awards, finalize and mark question answered
+  // apply pending awards
   for (let i = 0; i < teams.length; i++) {
     const p = _pendingAwards[i] || 0;
     if (p !== 0 && !_awardedThisQuestion[i]) {
@@ -516,7 +500,6 @@ function cancelAwards() {
     _originalScores = null;
     renderScoreBar();
   }
-  // reset per-question awarded tracker and pending selections so user can re-award
   _awardedThisQuestion = teams.map(() => false);
   _pendingAwards = teams.map(() => 0);
   renderAwardGrid();
@@ -589,7 +572,7 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
 }
-// initialize setup team inputs
+// initialize teams
 resetTeams();
 </script>
 </body>
