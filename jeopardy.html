@@ -190,7 +190,7 @@
   <div class="screen" id="screen-board">
     <div class="score-bar" id="score-bar"></div>
     <div class="round-label" id="round-label"></div>
-    <div class="board" id="board" style="grid-template-columns: repeat(5, 1fr);"></div>
+    <div class="board" id="board"></div>
     <div class="btn-row">
       <button class="btn-secondary" onclick="goLightning()">⚡ Lightning Round</button>
       <button class="btn-success" id="round2-btn" onclick="startRound2()" style="display:none">Round 2 →</button>
@@ -395,6 +395,8 @@ function renderBoard() {
     : 'Round 2 — 200 / 400 / 600 / 800 / 1000 pts';
 
   const board = document.getElementById('board');
+  // ensure the grid has one column per category
+  board.style.gridTemplateColumns = `repeat(${CATEGORIES.length}, 1fr)`;
   board.innerHTML = '';
 
   CATEGORIES.forEach(cat => {
